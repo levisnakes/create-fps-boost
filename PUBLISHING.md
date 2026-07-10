@@ -35,10 +35,11 @@ Select: **Optimization**. Optionally also **Utility** (for the diagnostics comma
 (It's a client-only render mod — this combination is what tells Modrinth to show the
 "client only" badge and stops it being suggested for server-only installs.)
 
-## 6. Links (optional)
+## 6. Links
 
-Leave Issues/Source/Wiki blank unless you create a GitHub repo for this project. If you
-do, come back and fill those in later — they're editable any time after publishing.
+- Source: `https://github.com/levisnakes/create-fps-boost`
+- Issues: `https://github.com/levisnakes/create-fps-boost/issues`
+- Wiki: leave blank
 
 ## 7. License
 
