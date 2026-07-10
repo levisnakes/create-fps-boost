@@ -1,0 +1,34 @@
+modLoader="javafml"
+loaderVersion="${loader_version_range}"
+license="${mod_license}"
+
+[[mods]]
+modId="${mod_id}"
+version="${mod_version}"
+displayName="${mod_name}"
+logoFile="icon.png"
+authors="levisnakes"
+description='''
+Client-side adaptive performance booster built for Create-based modpacks (works in any pack).
+
+Watches your real FPS and, only when the game struggles, gradually reins in the most expensive client-side work: distant block-entity renderers (Create gauges, displays, funnels...), sub-pixel entities (dropped items, XP orbs, arrows, item frames) and runaway particle storms. At or above your target FPS everything renders exactly like vanilla - nothing is removed.
+
+Type /createfpsboost in-game to see live stats. Fully configurable.
+'''
+
+[[mixins]]
+config="createfpsboost.mixins.json"
+
+[[dependencies.${mod_id}]]
+    modId="neoforge"
+    type="required"
+    versionRange="[21.1.0,)"
+    ordering="NONE"
+    side="CLIENT"
+
+[[dependencies.${mod_id}]]
+    modId="minecraft"
+    type="required"
+    versionRange="${minecraft_version_range}"
+    ordering="NONE"
+    side="CLIENT"
