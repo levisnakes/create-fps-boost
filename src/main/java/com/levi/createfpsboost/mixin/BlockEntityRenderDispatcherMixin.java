@@ -18,11 +18,14 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 /**
  * Distance-culls block entity renderers and enforces the adaptive per-frame render
- * budget. With default config (100%) and healthy FPS this never cancels anything
- * except explicit per-type overrides; under load the adaptive quality scale shrinks
- * every renderer's vanilla view distance proportionally, so beacons (256) keep
- * rendering much farther than gauges (64). Because Minecraft iterates block entities
- * roughly near-to-far by section, the budget culls the farthest renderers first.
+ * budget. Vanilla (BlockEntityRenderer.shouldRender) already culls every block entity
+ * against its own getViewDistance(), so at 100% and with no overrides this never
+ * cancels anything beyond what vanilla was already going to skip; it only starts doing
+ * real work once the adaptive quality scale drops below 100% or an override is tighter
+ * than a renderer's own default. Under load, beacons (256) still stay proportionally
+ * visible farther than gauges (64). Sections are visited in roughly camera-outward
+ * order (Minecraft's own occlusion graph), so the per-frame budget tends to drop the
+ * most distant sections' renderers first - an approximation, not a guaranteed sort.
  *
  * Only block entities that belong to the live client level are touched - ponder
  * scenes, schematic previews and other virtual levels pass through untouched.

@@ -50,10 +50,13 @@ public final class Config {
                 .defineInRange("minQuality", 0.35, 0.1, 1.0);
         SCALE_RENDER_DISTANCE = b
                 .comment(
-                        "Temporarily reduce the EFFECTIVE render distance during sustained low FPS (20s+ continuously below target).",
-                        "Runtime-only: your saved options are never modified, and it restores itself when FPS recovers.",
-                        "With Distant Horizons or Voxy installed, LOD terrain fills the horizon so this is nearly invisible.",
-                        "Changes are rare and heavily dampened (one chunk per minute) because they trigger a background terrain rebuild.")
+                        "Automates the vanilla Render Distance slider during sustained low FPS (20s+ continuously below",
+                        "target): temporarily reduces the EFFECTIVE render distance, the same value the slider controls.",
+                        "This does not add a new capability - it just adjusts the existing option for you so you don't",
+                        "have to. Runtime-only: your saved option is never modified, and it restores itself when FPS",
+                        "recovers. With Distant Horizons or Voxy installed, LOD terrain fills the horizon so the visual",
+                        "change is much less noticeable. Changes are rare and heavily dampened (one chunk per minute)",
+                        "because lowering render distance triggers a background terrain rebuild.")
                 .define("scaleRenderDistance", true);
         MIN_RENDER_DISTANCE = b
                 .comment(
@@ -62,39 +65,48 @@ public final class Config {
                 .defineInRange("minRenderDistance", 0, 0, 32);
         SCALE_ENTITY_DISTANCE = b
                 .comment(
-                        "Scale the global entity render distance under load (the engine value behind vanilla's 'Entity Distance').",
-                        "Runtime-only with a 50% floor; your saved option is never modified.")
+                        "Automates the vanilla Entity Distance slider under load (the same engine value it controls).",
+                        "Like the render distance option above, this adjusts an existing vanilla setting rather than",
+                        "adding new capability. Runtime-only with a 50% floor; your saved option is never modified.")
                 .define("scaleEntityDistance", true);
         b.pop();
 
         b.comment(
                 "Block entity renderer culling (Create gauges, displays, funnels, signs, chests...).",
-                "100% = exactly vanilla distances. The adaptive engine may scale this down further under load.")
+                "Vanilla ALREADY culls every block entity renderer against its own getViewDistance() (64 blocks",
+                "for most, 256 for beacons) - see BlockEntityRenderer.shouldRender(). At 100% and with no overrides",
+                "this section changes nothing over vanilla; it only starts culling once it goes below 100%, or a",
+                "per-type override is tighter than that renderer's own vanilla default.")
                 .push("blockEntities");
         BE_CULLING_ENABLED = b
-                .comment("Master switch for block entity distance culling.")
+                .comment("Master switch for this extra block entity distance culling.")
                 .define("enabled", true);
         BE_DISTANCE_PERCENT = b
-                .comment("Base render distance as a percent of each renderer's vanilla view distance (most are 64 blocks, beacons 256).")
+                .comment("Render distance as a percent of each renderer's OWN vanilla view distance (see comment above).")
                 .defineInRange("distancePercent", 100, 25, 100);
         BE_OVERRIDES = b
                 .comment(
-                        "Absolute per-type distance overrides, format \"modid:block_entity=distance\".",
-                        "Defaults cull sign TEXT beyond 48 blocks (the sign board itself is part of the chunk and always renders).")
+                        "Absolute per-type distance overrides, format \"modid:block_entity=distance\". Only useful where",
+                        "the number is BELOW that renderer's vanilla default (64 for most types, verify with a mod like",
+                        "Jade/HWYLA if unsure). Defaults cull sign text beyond 48 blocks, tighter than vanilla's 64 default",
+                        "(the sign board itself is part of the chunk mesh and always renders regardless).")
                 .defineListAllowEmpty("overrides",
                         List.of("minecraft:sign=48", "minecraft:hanging_sign=48"),
                         () -> "modid:block_entity=48",
                         o -> o instanceof String);
         BE_BUDGET_ENABLED = b
                 .comment(
-                        "Under load, cap how many block entities render per frame. Minecraft iterates them roughly",
-                        "near-to-far, so the farthest renderers yield first - a free LOD system. Inactive at full quality.")
+                        "Under sustained load, caps how many block entities render per frame. Sections are visited in",
+                        "roughly camera-outward order (Minecraft's own occlusion graph), so this tends to drop the most",
+                        "distant sections' renderers first - an approximation, not a guaranteed per-object distance sort.",
+                        "Inactive at full quality.")
                 .define("adaptiveBudget", true);
         b.pop();
 
         b.comment(
-                "Dropped item stacks render up to 5 copies of their model. Beyond this distance the copies",
-                "overlap within a pixel, so only 1 is rendered - up to 80% fewer item draws on loaded belts.")
+                "Dropped item stacks render up to 5 offset copies of their model for large counts. Beyond this",
+                "distance the offset is barely noticeable, so only 1 copy is drawn - fewer item draws on loaded belts.",
+                "This is a visible simplification (not pixel-identical to vanilla), always applied regardless of FPS.")
                 .push("items");
         ITEM_LOD_ENABLED = b
                 .comment("Master switch for the item model LOD.")
@@ -105,31 +117,34 @@ public final class Config {
         b.pop();
 
         b.comment(
-                "Culling for entities that are sub-pixel specks at long range (dropped items, XP orbs, arrows, item frames).",
-                "At the default 64 blocks these are physically invisible, so nothing is lost.")
+                "Vanilla ALREADY culls every entity by size: Entity.shouldRenderAtSqrDistance() hides an entity",
+                "beyond (avgHitboxSize * 64 * entityDistanceScaling) blocks. A 0.25-wide dropped item is already",
+                "invisible past ~16 blocks with no mods at all - this section can never improve on that, so only",
+                "entity types with a LARGER native distance are listed here by default (item frames, arrows and",
+                "XP orbs default to ~32 vanilla blocks). This only tightens things further during sustained low FPS.")
                 .push("entities");
         ENTITY_CULLING_ENABLED = b
-                .comment("Master switch for small entity distance culling.")
+                .comment("Master switch for this extra entity distance culling.")
                 .define("enabled", true);
         SMALL_ENTITY_DISTANCE = b
-                .comment("Distance in blocks beyond which the listed entity types stop rendering.")
-                .defineInRange("smallEntityDistance", 64, 16, 256);
+                .comment(
+                        "Distance in blocks beyond which the listed entity types stop rendering, before adaptive scaling.",
+                        "Only has an effect where it is tighter than that type's own vanilla native cull distance.")
+                .defineInRange("smallEntityDistance", 48, 8, 256);
         SMALL_ENTITIES = b
-                .comment("Entity types treated as 'small'. Never add players, mobs you fight, or Create contraptions/trains.")
+                .comment(
+                        "Entity types this applies to. Only types whose vanilla native cull distance is large enough",
+                        "for this to matter are listed by default (see comment above) - dropped items, snowballs, eggs,",
+                        "ender pearls, potions and XP bottles are already culled by vanilla before this could help, so",
+                        "they are intentionally NOT included. Never add players, mobs you fight, or Create contraptions/trains.")
                 .defineListAllowEmpty("smallEntities",
                         List.of(
-                                "minecraft:item",
                                 "minecraft:experience_orb",
                                 "minecraft:arrow",
                                 "minecraft:spectral_arrow",
-                                "minecraft:snowball",
-                                "minecraft:egg",
-                                "minecraft:ender_pearl",
-                                "minecraft:potion",
-                                "minecraft:experience_bottle",
                                 "minecraft:item_frame",
                                 "minecraft:glow_item_frame"),
-                        () -> "minecraft:item",
+                        () -> "minecraft:item_frame",
                         o -> o instanceof String);
         b.pop();
 

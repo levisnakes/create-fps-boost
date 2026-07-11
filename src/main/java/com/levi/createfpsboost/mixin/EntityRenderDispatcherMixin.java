@@ -11,9 +11,11 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 /**
- * Skips rendering of configured "small" entity types (dropped items, XP orbs,
- * arrows, item frames...) beyond a distance where they are sub-pixel anyway.
- * Entities in virtual/preview levels are never touched.
+ * Skips rendering of configured entity types beyond a configurable distance. Vanilla
+ * (Entity.shouldRenderAtSqrDistance) already culls every entity by hitbox size, so this
+ * only matters for types whose native cull distance is large enough to improve on -
+ * see Config.SMALL_ENTITIES for which types that applies to and why. Entities in
+ * virtual/preview levels are never touched.
  */
 @Mixin(EntityRenderDispatcher.class)
 public abstract class EntityRenderDispatcherMixin {

@@ -9,9 +9,9 @@ displayName="${mod_name}"
 logoFile="icon.png"
 authors="levisnakes"
 description='''
-Client-side adaptive performance booster built for Create-based modpacks (works in any pack).
+Client-side adaptive helper for Create-based modpacks (works in any pack).
 
-Watches your real FPS and, only when the game struggles, gradually reins in the most expensive client-side work: distant block-entity renderers (Create gauges, displays, funnels...), sub-pixel entities (dropped items, XP orbs, arrows, item frames) and runaway particle storms. At or above your target FPS everything renders exactly like vanilla - nothing is removed.
+Minecraft already culls block entities and small entities by distance on its own; this mod watches your real FPS and, only when the game is actually struggling, temporarily tightens those existing limits further, automates the render/entity distance sliders down and back up, and applies a global particle budget (vanilla only caps particles per render layer, not in total). At or above your target FPS it changes nothing beyond vanilla's own behavior.
 
 Type /createfpsboost in-game to see live stats. Fully configurable.
 '''

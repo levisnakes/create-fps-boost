@@ -1,50 +1,40 @@
 # Create FPS Boost
 
-Client-side adaptive performance mod for NeoForge 1.21.1, built for large Create-based
-modpacks (works in any pack — Create is not a hard dependency).
+Client-side adaptive helper for NeoForge 1.21.1, built for large Create-based modpacks
+(works in any pack — Create is not a hard dependency).
 
-## Why it exists
+## What it actually does
 
-Big Create packs already ship Sodium, Lithium, ModernFix, FerriteCore, ImmediatelyFast,
-EntityCulling, C2ME and Krypton — the generic optimizations are taken. What still kills
-FPS is pack-specific:
+Minecraft already does a fair amount of distance-based culling on its own:
+`Entity.shouldRenderAtSqrDistance` hides small entities by hitbox size (a dropped item is
+already gone past ~16 blocks with zero mods installed), and
+`BlockEntityRenderer.shouldRender` already culls every block-entity renderer against its
+own `getViewDistance()` (64 blocks for most types, 256 for beacons). This mod does **not**
+reinvent that — it watches your real FPS and, only once the game is actually struggling,
+temporarily tightens those existing vanilla limits further, automates the Render
+Distance / Entity Distance sliders down and back up for you, and applies a global
+particle budget that vanilla doesn't have (vanilla only caps particles per render layer,
+not across all of them combined). At or above your target FPS, everything behaves exactly
+as vanilla already would — there is no "extra" optimization sitting there for free.
 
-- **Hundreds of block-entity renderers** — gauges, displays, funnels, smart observers,
-  stock tickers, train stations — all individually rendered every frame out to 64 blocks.
-- **Item/entity floods** — belts and factories drop thousands of item entities, XP orbs
-  and projectiles that are sub-pixel specks past ~50 blocks but still cost draws.
-- **Particle storms** — vanilla caps particles at 16384 *per render layer*, so steam,
-  weather mods and explosions can pile up tens of thousands of live particles.
-- **Nothing adapts** — when FPS tanks in a mega-factory, every mod keeps rendering
-  everything at full distance anyway.
-
-## What it does
-
-All levers are driven by one **adaptive quality engine** that measures real FPS every
-second. At or above your target FPS (default 45) the game renders **100% vanilla —
-nothing is culled** (except the always-on item LOD, which is pixel-identical). Below it,
-quality scales down smoothly and recovers automatically. A world-join grace period keeps
-loading stutter from triggering it.
-
-| Lever | Mechanism | When active |
+| Lever | What it's built on | When it actually changes anything |
 |---|---|---|
-| Block-entity distance | Scales each renderer's *own* view distance (beacons keep their 256) + per-type overrides | Under load / overrides always |
-| Block-entity budget | Per-frame render cap; vanilla iterates near→far, so the farthest yield first (free LOD) | Under load only |
-| Small-entity culling | Items, XP orbs, arrows, item frames beyond 64 blocks (sub-pixel) | Always (distance shrinks under load) |
-| Item model LOD | Stacks render 1 model instead of up to 5 beyond 24 blocks | Always (pixel-identical) |
-| Global entity distance | Runtime `Entity.setViewScale`, floor 50%, options never written | Under load only |
-| Effective render distance | Clamps `getEffectiveRenderDistance` (what Sodium reads); Distant Horizons/Voxy LODs fill the horizon; heavily dampened (engages after 20s sustained low FPS, 1 chunk/min, auto-restores) | Sustained overload only |
-| Particle budget | Global cap 6000 with a probabilistic thinning ramp near the cap | Always (cap shrinks under load) |
+| Block-entity distance | Vanilla's own per-renderer `getViewDistance()` cull, scaled tighter | Only below 100% quality, or an explicit override tighter than that renderer's own default (e.g. sign text at 48 vs vanilla's 64) |
+| Block-entity budget | Per-frame render cap; sections are visited in roughly camera-outward order via Minecraft's own occlusion graph, so distant sections tend to drop first (an approximation, not a guaranteed sort) | Under sustained load only |
+| Extra entity culling | Vanilla's own hitbox-based cull, tightened further. Only entity types whose vanilla native distance is large enough to matter are included (item frames, XP orbs, arrows — dropped items and similar are already culled by vanilla before this could help, and are deliberately *not* in the default list) | Meaningfully, once below ~66% quality; negligibly above that |
+| Item model LOD | Vanilla renders up to 5 offset copies per large stack; this renders 1 beyond a set distance | Always — a real, permanent visual simplification, not "pixel-identical" |
+| Entity/render distance automation | Runtime-only adjustment of the same values the vanilla Entity Distance / Render Distance sliders control | Under sustained load only; automation, not a new capability |
+| Particle budget | A genuine global cap across all particle types (vanilla only caps per render layer at 16384) | Always, ramps in as the count approaches the cap |
 
 Everything is `@Inject`-only mixins (no overwrites), so it stacks safely with Sodium,
 EntityCulling, ImmediatelyFast, Flywheel, Iris shaders, and virtual worlds (Create
-ponders / schematic previews are explicitly excluded from culling).
+ponders / schematic previews are explicitly excluded).
 
 ## Commands
 
 - `/createfpsboost` (alias `/cfb`) — live status: FPS, quality %, active levers, culled counts last second.
 - `/createfpsboost report` — top 10 most-culled block entity types (your pack's worst offenders,
-  great input for per-type overrides).
+  useful input for per-type overrides).
 - `/createfpsboost gpu` — render-stack diagnostics: GPU/driver in use, VRAM (NVIDIA), Flywheel
   backend, Iris shader state, Java heap size, and warnings for common misconfigurations
   (integrated-GPU rendering, duplicate LOD mods, undersized/oversized heap).

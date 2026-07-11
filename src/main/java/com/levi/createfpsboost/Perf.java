@@ -330,12 +330,17 @@ public final class Perf {
         return rdLimit;
     }
 
-    /** Render distance limit for this entity type, or -1 if this mod does not touch it. */
+    /**
+     * Render distance limit for this entity type, or -1 if this mod does not touch it.
+     * Floor is 8, well below vanilla's own native cull distance for every type in the
+     * default list (~32 blocks), so adaptive scaling can actually go tighter than
+     * vanilla instead of asymptoting at a value vanilla already reaches on its own.
+     */
     public static double smallEntityLimit(EntityType<?> type) {
         if (!entOn || !smallEntities.contains(type)) {
             return -1;
         }
-        return Math.max(16f, smallEntityDist * quality());
+        return Math.max(8f, smallEntityDist * quality());
     }
 
     /** Current particle budget, or -1 when disabled. Shrinks quadratically with quality. */

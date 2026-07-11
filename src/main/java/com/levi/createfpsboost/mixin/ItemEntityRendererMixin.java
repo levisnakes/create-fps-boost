@@ -15,9 +15,10 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 /**
- * Item model LOD: vanilla renders up to 5 offset copies of the model for large
- * stacks. Beyond the LOD distance the copies overlap within a pixel, so a single
- * model is rendered instead - belts and item farms draw up to 80% fewer models.
+ * Item model LOD: vanilla renders up to 5 offset copies of the model for large stacks.
+ * Beyond the LOD distance a single model is rendered instead. This is a visible
+ * simplification, not pixel-identical to vanilla - it trades the multi-copy "pile"
+ * look at range for fewer draws on loaded belts. Always applied regardless of FPS.
  */
 @Mixin(ItemEntityRenderer.class)
 public abstract class ItemEntityRendererMixin extends EntityRenderer<ItemEntity> {
