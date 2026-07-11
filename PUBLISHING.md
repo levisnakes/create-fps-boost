@@ -1,14 +1,10 @@
 # Publishing checklist — Create FPS Boost 1.1.0
 
-> ⚠️ **Do not submit yet.** The original 1.0.0 submission was rejected by a Modrinth
-> moderator with an explicit "do not resubmit this project." Before using any of the
-> steps below, send the message in [MODRINTH_APPEAL.md](MODRINTH_APPEAL.md) through
-> Modrinth's support channel and wait for a response. Only proceed if they say a
-> corrected resubmission is acceptable. Submitting anyway, or re-submitting under a
-> different project name/slug to route around the rejection, risks your account —
-> not just this listing.
+> ✅ **Cleared to submit.** The 1.0.0 rejection said "do not resubmit," but Modrinth
+> support (Zahir, 2026-07-11) explicitly recommended submitting the project for review
+> again after the appeal. Submit the corrected **1.1.0** build below — the description
+> and code were reworked so every claim is accurate against vanilla behavior.
 
-Everything below is prepped and ready for **if and when** you get a green light.
 This is a copy-paste walkthrough for https://modrinth.com/dashboard/projects →
 **Create a project**.
 
